@@ -74,6 +74,7 @@ class ReflexAgent(Agent):
         newScaredTimes = [ghostState.scaredTimer for ghostState in newGhostStates]
 
         "*** YOUR CODE HERE ***"
+        
         if successorGameState.isWin():
             return float("inf") - 20
 
@@ -98,35 +99,6 @@ class ReflexAgent(Agent):
             total_score += 200
 
         return total_score
-
-        """
-        if successorGameState.isWin():
-            return float("inf") - 20
-        ghostposition = currentGameState.getGhostPosition(1)
-        distfromghost = util.manhattanDistance(ghostposition, newPos)
-        score = max(distfromghost, 3) + successorGameState.getScore()
-        score_prueba = max(distfromghost, 3)
-        #print distfromghost
-        #print score_prueba
-        foodlist = newFood.asList()
-        closestfood = 100
-        for foodpos in foodlist:
-            thisdist = util.manhattanDistance(foodpos, newPos)
-            if (thisdist < closestfood):
-                closestfood = thisdist
-        if (currentGameState.getNumFood() > successorGameState.getNumFood()):
-            score += 100
-        if action == Directions.STOP:
-            score -= 3
-        score -= 3 * closestfood
-        capsuleplaces = currentGameState.getCapsules()
-        if successorGameState.getPacmanPosition() in capsuleplaces:
-            score += 120
-        print score
-        return score
-        """
-
-
 
         """
         newFood = successorGameState.getFood().asList()
