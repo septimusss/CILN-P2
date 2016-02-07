@@ -74,57 +74,26 @@ class ReflexAgent(Agent):
         newScaredTimes = [ghostState.scaredTimer for ghostState in newGhostStates]
 
         "*** YOUR CODE HERE ***"
-        
+
         if successorGameState.isWin():
-            return float("inf") - 20
+            return float("+inf")
 
         ghost_position = currentGameState.getGhostPosition(1)
         dist_from_ghost = util.manhattanDistance(ghost_position, newPos)
         total_score = successorGameState.getScore() + dist_from_ghost
         list_food = newFood.asList()
         closest_food = 99999
-        pacman_position = successorGameState.getPacmanPosition()
-        #pacman_action = getAction(0)
         for food_position in list_food:
             dist_from_food = util.manhattanDistance(food_position, newPos)
             if (dist_from_food < closest_food):
                 closest_food = dist_from_food
         if (currentGameState.getNumFood() > successorGameState.getNumFood()):
             total_score += 150
-        #if pacman_action == Directions.STOP:
-            #total_score -=  5
         total_score -= 5 * closest_food
-        capsule_places = currentGameState.getCapsules()
-        if pacman_position in capsule_places:
-            total_score += 200
+        if dist_from_ghost < 3:
+            total_score -= 1000 * dist_from_ghost
 
         return total_score
-
-        """
-        newFood = successorGameState.getFood().asList()
-        output = 0
-
-        fMin = 99999
-        for food in newFood:
-            u = util.manhattanDistance(newPos, food)
-            if u < fMin and u != 0:
-                fMin = u
-
-        gMin = 99999
-        for ghostState in newGhostStates:
-            g = util.manhattanDistance(newPos, ghostState.getPosition())
-            if g < gMin:
-                gMin = g
-
-        if gMin == 0 or gMin > 20:
-            gMin = -1000
-
-        return gMin/fMin + successorGameState.getScore()
-
-        """
-
-
-        #return successorGameState.getScore()
 
 def scoreEvaluationFunction(currentGameState):
     """
