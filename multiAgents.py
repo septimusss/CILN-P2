@@ -166,6 +166,7 @@ class MinimaxAgent(MultiAgentSearchAgent):
                 return best_action
             else:
                 return best_score
+                
 
         def ghost_fun(state, depth, ghost):
             if state.isLose() or state.isWin():
