@@ -195,7 +195,6 @@ class AlphaBetaAgent(MultiAgentSearchAgent):
                 successor = state.generateSuccessor(agent, a)
                 v = (minVal(successor, depth, agent + 1, alpha, beta), a)
                 if v[0] > max[0]: max = v
-                """Alpha-Beta prunning"""
                 if v[0] > beta: return v[0]
                 alpha = v[0] if v[0] > alpha else alpha
             if depth == 0: return max[1]
@@ -211,8 +210,7 @@ class AlphaBetaAgent(MultiAgentSearchAgent):
                     v = minVal(successor, depth, agent + 1, alpha, beta)
                 else:
                     v = maxVal(successor, depth + 1, 0, alpha, beta)
-                if v < min: min =
-                """Alpha-Beta prunning"""
+                if v < min: min = v
                 if v < alpha: return v
                 beta = v if v < beta else beta
             return min
