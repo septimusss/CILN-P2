@@ -157,7 +157,6 @@ class MinimaxAgent(MultiAgentSearchAgent):
                 successor = state.generateSuccessor(agent, a)
                 v = (minVal(successor, depth, agent + 1), a)
                 if v[0] > max[0]: max = v
-            print "Max: ", max[0]
             if depth == 0: return max[1]
             else: return max[0]
 
@@ -172,7 +171,6 @@ class MinimaxAgent(MultiAgentSearchAgent):
                 else:
                     v = maxVal(successor, depth + 1, 0)
                 if v < min: min = v
-            print "Min: ", min
             return min
 
         return maxVal(gameState)
@@ -230,7 +228,32 @@ class ExpectimaxAgent(MultiAgentSearchAgent):
           legal moves.
         """
         "*** YOUR CODE HERE ***"
-        util.raiseNotDefined()
+
+        def maxVal(state, depth = 0, agent = 0):
+            if state.isWin() or state.isLose() or (depth == self.depth):
+                return self.evaluationFunction(state)
+            max = (float("-inf"), 'Stop')
+            for a in state.getLegalActions(agent):
+                successor = state.generateSuccessor(agent, a)
+                v = (minVal(successor, depth, agent + 1), a)
+                if v[0] > max[0]: max = v
+            if depth == 0: return max[1]
+            else: return max[0]
+
+        def minVal(state, depth = 0, agent = 0):
+            if state.isWin() or state.isLose():
+                return self.evaluationFunction(state)
+            min = set()
+            for a in state.getLegalActions(agent):
+                successor = state.generateSuccessor(agent,a)
+                if agent < state.getNumAgents() - 1:
+                    v = minVal(successor, depth, agent + 1)
+                else:
+                    v = maxVal(successor, depth + 1, 0)
+                min.add(v)
+            return sum(min)/float(len(min))
+
+        return maxVal(gameState)
 
 def betterEvaluationFunction(currentGameState):
     """
@@ -240,7 +263,31 @@ def betterEvaluationFunction(currentGameState):
       DESCRIPTION: <write something here so we know what you did>
     """
     "*** YOUR CODE HERE ***"
-    util.raiseNotDefined()
+
+    pacmanPos = currentGameState.getPacmanPosition()
+    ghostStates = currentGameState.getGhostStates()
+    food = currentGameState.getFood()
+
+    score = currentGameState.getScore()
+    # si el estado es ganador retornamos directamente un score muy bueno
+    if currentGameState.isWin(): return 100 + score
+    # cuanta mas comida queda por comer menos score
+    if food.count() > 0: score += (1.0 / food.count()) * 20
+    # si un fantasma esta asustado nos lo comemos, sino huimos
+    for ghost in ghostStates:
+        ghostPos = ghost.getPosition()
+        if ghost.scaredTimer < 1:
+            if manhattanDistance(pacmanPos, ghostPos) == 1:
+                score = -100
+        else:
+            score += (1 / manhattanDistance(pacmanPos, ghostPos)) * 10
+    # cuanto mas cerca estemos de la comida mas cercana mas score
+    d2f = float("inf")
+    for f in food.asList():
+        d2f = min(d2f, manhattanDistance(pacmanPos, f))
+    score -= d2f
+
+    return score
 
 # Abbreviation
 better = betterEvaluationFunction
