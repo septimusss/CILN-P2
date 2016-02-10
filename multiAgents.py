@@ -149,48 +149,33 @@ class MinimaxAgent(MultiAgentSearchAgent):
         """
         "*** YOUR CODE HERE ***"
 
+        def maxVal(state, depth = 0, agent = 0):
+            if state.isWin() or state.isLose() or (depth == self.depth):
+                return self.evaluationFunction(state)
+            max = (float("-inf"), 'Stop')
+            for a in state.getLegalActions(agent):
+                successor = state.generateSuccessor(agent, a)
+                v = (minVal(successor, depth, agent + 1), a)
+                if v[0] > max[0]: max = v
+            print "Max: ", max[0]
+            if depth == 0: return max[1]
+            else: return max[0]
 
-        def pacman_fun(state, depth):
+        def minVal(state, depth = 0, agent = 0):
             if state.isWin() or state.isLose():
-                return state.getScore()
-            legal_actions_pacman = state.getLegalActions(0)
-            best_score = float("-inf")
-            score = best_score
-            best_action = 0
-            for action in legal_actions_pacman:
-                score = ghost_fun(state.generateSuccessor(0, action), depth, 1)
-                if score > best_score:
-                    best_score = score
-                    best_action = action
-            if depth == 0:
-                return best_action
-            else:
-                return best_score
-                
-
-        def ghost_fun(state, depth, ghost):
-            if state.isLose() or state.isWin():
-                return state.getScore()
-            next_ghost = ghost + 1
-            if ghost == state.getNumAgents() - 1:
-                next_ghost = 0
-            legal_actions_ghost = state.getLegalActions(ghost)
-            best_score = float("inf")
-            score = best_score
-            for action in legal_actions_ghost:
-                if next_ghost == 0:
-                    if depth == self.depth - 1:
-                        score = self.evaluationFunction(state.generateSuccessor(ghost, action))
-                    else:
-                        score = pacman_fun(state.generateSuccessor(ghost, action), depth + 1)
+                return self.evaluationFunction(state)
+            min = float("inf")
+            for a in state.getLegalActions(agent):
+                successor = state.generateSuccessor(agent,a)
+                if agent < state.getNumAgents() - 1:
+                    v = minVal(successor, depth, agent + 1)
                 else:
-                    score = ghost_fun(state.generateSuccessor(ghost, action), depth, next_ghost)
-                if score < best_score:
-                    best_score = score
-            return best_score
-        return pacman_fun(gameState, 0)
+                    v = maxVal(successor, depth + 1, 0)
+                if v < min: min = v
+            print "Min: ", min
+            return min
 
-
+        return maxVal(gameState)
 
 class AlphaBetaAgent(MultiAgentSearchAgent):
     """
@@ -202,7 +187,37 @@ class AlphaBetaAgent(MultiAgentSearchAgent):
           Returns the minimax action using self.depth and self.evaluationFunction
         """
         "*** YOUR CODE HERE ***"
-        util.raiseNotDefined()
+        def maxVal(state, depth = 0, agent = 0, alpha = float("-inf"), beta = float("inf")):
+            if state.isWin() or state.isLose() or (depth == self.depth):
+                return self.evaluationFunction(state)
+            max = (float("-inf"), 'Stop')
+            for a in state.getLegalActions(agent):
+                successor = state.generateSuccessor(agent, a)
+                v = (minVal(successor, depth, agent + 1, alpha, beta), a)
+                if v[0] > max[0]: max = v
+                """Alpha-Beta prunning"""
+                if v[0] > beta: return v[0]
+                alpha = v[0] if v[0] > alpha else alpha
+            if depth == 0: return max[1]
+            else: return max[0]
+
+        def minVal(state, depth, agent, alpha, beta):
+            if state.isWin() or state.isLose():
+                return self.evaluationFunction(state)
+            min = float("inf")
+            for a in state.getLegalActions(agent):
+                successor = state.generateSuccessor(agent,a)
+                if agent < state.getNumAgents() - 1:
+                    v = minVal(successor, depth, agent + 1, alpha, beta)
+                else:
+                    v = maxVal(successor, depth + 1, 0, alpha, beta)
+                if v < min: min =
+                """Alpha-Beta prunning"""
+                if v < alpha: return v
+                beta = v if v < beta else beta
+            return min
+
+        return maxVal(gameState)
 
 class ExpectimaxAgent(MultiAgentSearchAgent):
     """
