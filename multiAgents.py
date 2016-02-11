@@ -75,24 +75,25 @@ class ReflexAgent(Agent):
 
         "*** YOUR CODE HERE ***"
 
-        if successorGameState.isWin():
-            return float("+inf")
-
-        ghost_position = currentGameState.getGhostPosition(1)
-        dist_from_ghost = util.manhattanDistance(ghost_position, newPos)
-        total_score = successorGameState.getScore() + dist_from_ghost
-        list_food = newFood.asList()
-        closest_food = 99999
-        for food_position in list_food:
-            dist_from_food = util.manhattanDistance(food_position, newPos)
-            if (dist_from_food < closest_food):
-                closest_food = dist_from_food
-        if (currentGameState.getNumFood() > successorGameState.getNumFood()):
-            total_score += 150
+        # si el estado siguiente es ganador devolvemos la maxima puntuacion
+        if successorGameState.isWin(): return float("+inf")
+        # precalculamos la distancia al fantasma
+        d2ghost = util.manhattanDistance(currentGameState.getGhostPosition(1), newPos)
+        # por defecto devolvemos el score del estado
+        total_score = successorGameState.getScore()
+        # cuanto mayor es la distancia a la comida mas cercana peor score
+        closest_food = float("inf")
+        for food_position in newFood.asList():
+            d = util.manhattanDistance(food_position, newPos)
+            closest_food = min(closest_food, d)
         total_score -= 5 * closest_food
-        if dist_from_ghost < 3:
-            total_score -= 1000 * dist_from_ghost
-
+        # si en el siguiente estado hay menos comida significa que hemos
+        # comido, damos mejor score
+        if (currentGameState.getNumFood() > successorGameState.getNumFood()):
+            total_score += 120
+        # si tenemos un fantasma muy cerca retornamos un score muy malo
+        # de esta forma evitamos al fantasma cuando lo tenemos muy cerca
+        if d2ghost < 3: total_score -= 500 * d2ghost
         return total_score
 
 def scoreEvaluationFunction(currentGameState):
@@ -148,31 +149,43 @@ class MinimaxAgent(MultiAgentSearchAgent):
             Returns the total number of agents in the game
         """
         "*** YOUR CODE HERE ***"
-
+        # funcion que representa el paso de max-value del algoritmo
+        # mira el score de cada uno de sus hijos y retorna el mayor de ellos
         def maxVal(state, depth = 0, agent = 0):
+            # si el estado es ganador, perdedor o hemos llegado el limit de
+            # profundidad, retornamos el score asignado a este estado
             if state.isWin() or state.isLose() or (depth == self.depth):
                 return self.evaluationFunction(state)
             max = (float("-inf"), 'Stop')
+            # generamos los hijos a partir de las acciones validas
             for a in state.getLegalActions(agent):
                 successor = state.generateSuccessor(agent, a)
                 v = (minVal(successor, depth, agent + 1), a)
                 if v[0] > max[0]: max = v
+            # si depth == 0 quiere decir que estamos en la llamada inicial de la
+            # funcion, asi que en vez de retorna el score, retornamos la accion
             if depth == 0: return max[1]
             else: return max[0]
-
+        # funcion que representa el paso de min-value del algoritmo
+        # mira el score de cada uno de sus hijos y devuelve el menor de ellos
         def minVal(state, depth = 0, agent = 0):
+            # casi igual a la funcion maxVal, con un pequeno cambio
             if state.isWin() or state.isLose():
                 return self.evaluationFunction(state)
             min = float("inf")
             for a in state.getLegalActions(agent):
                 successor = state.generateSuccessor(agent,a)
+                # para soportar multiples fantasmas tenemos que ejecutar la capa
+                # min para cada uno de los fantasmas, si ya estamos en el ultimo
+                # fantasma volvemos a ejecutar el maxVal (pacman) con depth += 1
                 if agent < state.getNumAgents() - 1:
                     v = minVal(successor, depth, agent + 1)
                 else:
                     v = maxVal(successor, depth + 1, 0)
                 if v < min: min = v
             return min
-
+        # para obtener el resultado basta con ejecutar maxVal con el estado como
+        # argumento, las llamadas recursivas haran el resto del trabajo
         return maxVal(gameState)
 
 class AlphaBetaAgent(MultiAgentSearchAgent):
@@ -193,6 +206,9 @@ class AlphaBetaAgent(MultiAgentSearchAgent):
                 successor = state.generateSuccessor(agent, a)
                 v = (minVal(successor, depth, agent + 1, alpha, beta), a)
                 if v[0] > max[0]: max = v
+                # todo es igual a minimax, lo unico que cambia es este trozo
+                # ahora vamos pasando los valores de alpha y beta para hacer
+                # prunning cuando se cumpla la condicion
                 if v[0] > beta: return v[0]
                 alpha = v[0] if v[0] > alpha else alpha
             if depth == 0: return max[1]
@@ -209,10 +225,13 @@ class AlphaBetaAgent(MultiAgentSearchAgent):
                 else:
                     v = maxVal(successor, depth + 1, 0, alpha, beta)
                 if v < min: min = v
+                # similar al maxVal, en este caso miramos el valor de alpha para
+                # decidir si hacemos prunning o no
                 if v < alpha: return v
                 beta = v if v < beta else beta
             return min
-
+        # para obtener el resultado basta con ejecutar maxVal con el estado como
+        # argumento, las llamadas recursivas haran el resto del trabajo
         return maxVal(gameState)
 
 class ExpectimaxAgent(MultiAgentSearchAgent):
@@ -243,6 +262,8 @@ class ExpectimaxAgent(MultiAgentSearchAgent):
         def minVal(state, depth = 0, agent = 0):
             if state.isWin() or state.isLose():
                 return self.evaluationFunction(state)
+            # casi igual a Q2, ahora en vez de retorna el score menor para cada
+            # fantasma, retornamos una media de todas las posibles acciones
             min = set()
             for a in state.getLegalActions(agent):
                 successor = state.generateSuccessor(agent,a)
@@ -263,11 +284,11 @@ def betterEvaluationFunction(currentGameState):
       DESCRIPTION: <write something here so we know what you did>
     """
     "*** YOUR CODE HERE ***"
-
+    # precalculamos algunas variables
     pacmanPos = currentGameState.getPacmanPosition()
     ghostStates = currentGameState.getGhostStates()
     food = currentGameState.getFood()
-
+    # por defect retornamos el score propio del estado
     score = currentGameState.getScore()
     # si el estado es ganador retornamos directamente un score muy bueno
     if currentGameState.isWin(): return 100 + score
@@ -280,7 +301,7 @@ def betterEvaluationFunction(currentGameState):
             if manhattanDistance(pacmanPos, ghostPos) == 1:
                 score = -100
         else:
-            score += (1 / manhattanDistance(pacmanPos, ghostPos)) * 10
+            score += (1.0 / manhattanDistance(pacmanPos, ghostPos)) * 10
     # cuanto mas cerca estemos de la comida mas cercana mas score
     d2f = float("inf")
     for f in food.asList():
